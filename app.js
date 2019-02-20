@@ -6,6 +6,7 @@ var path = require('path');
 //var checkDate = require('./api/routes/checkDate');
 
 app.use('/static', express.static(__dirname + '/static'));
+app.use('/public', express.static(__dirname + '/public'));
 //Setup logging (morgan) and body parsing
 app.use(express.urlencoded({extended: false}));
 app.use(express.json());
