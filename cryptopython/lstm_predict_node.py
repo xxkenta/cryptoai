@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import math
 import json
+import sys
 
 def test_model(sequence_length, window_size, X_train_shape, dropout_value, activation_function, loss_function, optimizer, weights, X_test, Y_test, unnormalized_bases):
     """
@@ -82,16 +83,16 @@ def test_model(sequence_length, window_size, X_train_shape, dropout_value, activ
     ax.set_ylabel("Price (USD)")
     ax.set_xlabel("Time (Hours)")
     ax.legend()
-    plt.savefig("XRP-Predicted-Real-graph.png")
+    plt.savefig("./cryptopython/XRP-Predicted-Real-graph.png")
     
     return y_predict, real_y_test, real_y_predict, fig
 
-weights = "models/LSTM_Final-10-0.185.model"
-X_test = np.load('data/X_test.npy')
-Y_test = np.load('data/Y_test.npy')
-unnormalized_bases = np.load('data/unnormalized_bases.npy')
+weights = "./cryptopython/models/" + sys.argv[1]
+X_test = np.load('./cryptopython/data/X_test.npy')
+Y_test = np.load('./cryptopython/data/Y_test.npy')
+unnormalized_bases = np.load('./cryptopython/data/unnormalized_bases.npy')
 
-with open('stats.json') as f:
+with open('./cryptopython/stats.json') as f:
     model_values = json.load(f)
 
 sequence_length = model_values['sequence_length']   
@@ -104,4 +105,4 @@ dropout_value = model_values['dropout']
 
 y_predict, real_y_test, real_y_predict, fig1 = test_model(sequence_length, window_size, X_train_shape, dropout_value, activation_function, loss_function, optimizer, weights, X_test, Y_test, unnormalized_bases)
 
-plt.show(fig1)
+#plt.show(fig1)

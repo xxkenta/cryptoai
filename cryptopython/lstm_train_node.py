@@ -14,8 +14,9 @@ import math
 import requests
 import json
 import inspect
+import sys
 
-def load_data(sequence_length, percent_training, crypto, exchange):
+def load_data(hours, sequence_length, percent_training, crypto, exchange):
     """
     Loads the XRP data
     
@@ -42,7 +43,7 @@ def load_data(sequence_length, percent_training, crypto, exchange):
     
     response = requests.get("https://min-api.cryptocompare.com/data/histohour?fsym=" + crypto + "&tsym=USD&limit=" + limit + "&e=" + exchange + "&api_key=" + api_key,verify=False)
     hist = pd.DataFrame(json.loads(response.content)['Data'])
-    for i in range(4):
+    for i in range(hours):
         timestamp = str(hist['time'].iloc[0])
         response = requests.get("https://min-api.cryptocompare.com/data/histohour?fsym=" + crypto + "&tsym=USD&limit=" + limit + "&toTs=" + timestamp + "&e=" + exchange + "&api_key=" + api_key,verify=False)
         hist = hist.append(pd.DataFrame(json.loads(response.content)['Data']),ignore_index=True)
@@ -159,7 +160,7 @@ def train_model(X_train, Y_train, batch_num, num_epoch, X_test, Y_test, window_s
     #Set loss function and optimizer
     model.compile(loss=loss_function, optimizer=optimizer, metrics=['accuracy'])
     filepath = "LSTM_Final-{epoch:02d}-{val_acc:.3f}"
-    checkpoint = ModelCheckpoint("models/{}.model".format(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode="max")) #saves only the best model from each epoch   
+    checkpoint = ModelCheckpoint("./cryptopython/models/{}.model".format(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode="max")) #saves only the best model from each epoch   
     
     #Record the time the model starts training
     start = time.time()
@@ -195,7 +196,7 @@ def json_export(timerange, window_size, X_train_shape, activation_function, loss
     stats['loss'] = loss
     stats['models'] = models
     
-    with open('stats.json', 'w') as outfile:  
+    with open('./cryptopython/stats.json', 'w') as outfile:  
         json.dump(stats, outfile)    
     return
 
@@ -203,17 +204,18 @@ def json_export(timerange, window_size, X_train_shape, activation_function, loss
 crypto = "XRP"
 exchange = "Bittrex"
 
-sequence_length = 50
-dropout = 0.2
-epochs = 10
+hours = int((int(sys.argv[1])/2000) - 1)
+sequence_length = int(sys.argv[2])
+dropout = float(sys.argv[3])
+epochs = int(sys.argv[4])
 percent_training = 0.9
-batch_size=1024
+batch_size= int(sys.argv[5])
 activation_function = 'tanh'
 loss_function = 'mse'
 optimizer = 'adam'
 
 #Delete old model weights
-folder = 'models/'
+folder = './cryptopython/models/'
 for the_file in os.listdir(folder):
     file_path = os.path.join(folder, the_file)
     try:
@@ -224,7 +226,7 @@ for the_file in os.listdir(folder):
         print(e)
         
 #Get and format data
-X_train, Y_train, X_test, Y_test, unnormalized_bases, window_size, timerange = load_data(sequence_length, percent_training, crypto, exchange)
+X_train, Y_train, X_test, Y_test, unnormalized_bases, window_size, timerange = load_data(hours, sequence_length, percent_training, crypto, exchange)
 
 #Initializing the Model
 model, training_time, processed_per_second, val_acc, loss = train_model(
@@ -257,9 +259,9 @@ json_export(timerange,
             loss,
             models)
 
-np.save('data/X_test', X_test)
-np.save('data/Y_test', Y_test)
-np.save('data/unnormalized_bases', unnormalized_bases)
+np.save('./cryptopython/data/X_test', X_test)
+np.save('./cryptopython/data/Y_test', Y_test)
+np.save('./cryptopython/data/unnormalized_bases', unnormalized_bases)
 
 #Testing the Model
 #y_predict, real_y_test, real_y_predict, fig1 = test_model(model, X_test, Y_test, unnormalized_bases)

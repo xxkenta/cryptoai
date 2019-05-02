@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="checkRefresh">
+<html lang="en" ng-app="crypto">
 <head>
     <meta charset="UTF-8">
 
@@ -12,6 +12,44 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+
+    <script>
+        $(function() {
+            $.getJSON('./cryptopython/stats.json', function (data) {
+                $("#time_to_train_model").text(data.training_time + " seconds");
+                $("#processed_per_second").text(data.processed_per_second.toFixed(2));
+                $("#val_acc").text(data.val_acc.toFixed(2)*100 + "%");
+                var models = data.models;
+                for (var i=0;i<models.length;i++){
+                    $('<option/>').val(models[i]).text(models[i]).appendTo('#model_weights');
+                }
+                $("#seq_len_value").text(data.sequence_length);
+                $("#dropout_value").text(data.dropout);
+                $("#epoch_value").text(data.epochs);
+                $("#batch_size_value").text(data.batch_size);
+
+            });
+        });
+    </script>
+    <script>
+        function train(){
+            var hours = document.getElementById("hours_of_data").value;
+            var seq_len = document.getElementById("seq_len").value;
+            var dropout = document.getElementById("dropout").value;
+            var epochs = document.getElementById("epochs").value;
+            var batch_size = document.getElementById("batch_size").value;
+            $.get("http://localhost:80/train?hours=" + hours + "&seq_len=" + seq_len +"&dropout=" + dropout +"&epochs=" + epochs + "&batch_size=" +batch_size,
+                function(data, status){
+                    alert("done");
+                });
+        }
+        function test(){
+            var model = document.getElementById("model_weights").value;
+            $.get("http://localhost:80/test?model=" + model, function(data, status){
+                    alert("done");
+                });
+        }
+    </script>
 </head>
 <body>
     <div class="container-fluid">
@@ -22,45 +60,24 @@
                 </h3>
                 <form>
                     <div class="form-group">
-                        <label for="github_versions">Versions:</label>
-                        <select class="form-control" id="github_versions">
-                            <option>1</option>
-                            <option>2</option>
-                            <option>3</option>
-                            <option>4</option>
+                        <label for="model_weights">Models:</label>
+                        <select class="form-control" id="model_weights">
+
                         </select>
                     </div>
                     <div class="form-group">
-                        <p>Training Date Range: </p>
-                        <input type="text" name="daterange" value="01/01/2018 - 01/15/2018" />
-
-                        <script>
-                            $(function() {
-                                $('input[name="daterange"]').daterangepicker({
-                                    opens: 'left'
-                                }, function(start, end, label) {
-                                    console.log("A new date selection was made: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
-                                });
-                            });
-                        </script>
-                    </div>
-                    <div class="form-group">
-                        <p>Testing Date Range: </p>
-                        <input type="text" name="daterange2" value="01/01/2018 - 01/15/2018" />
-
-                        <script>
-                            $(function() {
-                                $('input[name="daterange2"]').daterangepicker({
-                                    opens: 'left'
-                                }, function(start, end, label) {
-                                    console.log("A new date selection was made: " + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD'));
-                                });
-                            });
-                        </script>
+                        <label for="hours_of_data">Hours of Data:</label>
+                        <select class="form-control" id="hours_of_data">
+                            <option>2000</option>
+                            <option>4000</option>
+                            <option>6000</option>
+                            <option>8000</option>
+                            <option>10000</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="current_exchange">Versions:</label>
+                        <label for="current_exchange">Exchange:</label>
                         <select class="form-control" id="current_exchange">
                             <option>Bittrex</option>
                             <option>Other Exchange</option>
@@ -68,95 +85,84 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="time_weight" class="col-2 col-form-label">Time Weight</label>
+                        <label for="seq_len" class="col-2 col-form-label">Sequence Length</label>
                         <div class="col-10">
-                            <input class="form-control" type="text" value="0" id="time_weight">
+                            <input class="form-control" type="text" value="0" id="seq_len">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="price_weight" class="col-2 col-form-label">Price Weight</label>
+                        <label for="dropout" class="col-2 col-form-label">Dropout (0.1-0.9)</label>
                         <div class="col-10">
-                            <input class="form-control" type="text" value="0" id="price_weight">
+                            <input class="form-control" type="text" value="0" id="dropout">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="volume_weight" class="col-2 col-form-label">Volume Weight</label>
+                        <label for="epochs" class="col-2 col-form-label">Epochs</label>
                         <div class="col-10">
-                            <input class="form-control" type="text" value="0" id="volume_weight">
+                            <input class="form-control" type="text" value="0" id="epochs">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="success_threshold" class="col-2 col-form-label">Success Threshold</label>
+                        <label for="batch_size" class="col-2 col-form-label">Batch Size</label>
                         <div class="col-10">
-                            <input class="form-control" type="text" value="0" id="success_threshold">
+                            <input class="form-control" type="text" value="0" id="batch_size">
                         </div>
                     </div>
 
-                    <button type="button" class="btn btn-primary">
-                        Button
+                    <button type="button" class="btn btn-primary" onclick="train()">
+                        Train
                     </button>
-                    <button type="button" class="btn btn-primary">
-                        Button
+                    <button type="button" class="btn btn-primary" onclick="test()">
+                        Test
                     </button>
                 </form>
             </div>
             <div class="col-md-9">
-                <img alt="chart will go here" src="/public/images/predictedprice.png" />
+                <img alt="chart will go here" src="/cryptopython/XRP-Predicted-Real-graph.png" />
             </div>
         </div>
         <div class="row">
             <div class="col-md-3">
-                <table class="table table-sm table-hover">
-                    <thead>
-                    <tr>
-                        <th>
-                            Site
-                        </th>
-                        <th>
-                            Status
-                        </th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr>
-                        <td>
-                            API
-                        </td>
-                        <td>
-                            Good
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            GitHub
-                        </td>
-                        <td>
-                            Good
-                        </td>
-                    </tr>
-                    </tbody>
+                <h5><b>Last Train Parameters:</b></h5>
+                <table>
+                <tr>
+                    <td>Sequence Length: </td>
+                    <td id="seq_len_value"></td>
+                </tr>
+                <tr>
+                    <td>Dropout: </td>
+                    <td id="dropout_value"></td>
+                </tr>
+                <tr>
+                    <td>Epochs: </td>
+                    <td id="epoch_value"></td>
+                </tr>
+                <tr>
+                    <td>Batch Size: </td>
+                    <td id="batch_size_value"></td>
+                </tr>
                 </table>
             </div>
             <div class="col-md-3">
                 <h4 class="text-center">
-                    Current Success Rate
+                    Validation Accuracy:
                 </h4>
-                <h1 class="text-center">%</h1>
+                <h1 class="text-center", id="val_acc">%</h1>
             </div>
             <div class="col-md-3">
                 <h4 class="text-center">
-                    Previous Success Rate
+                    Points Processed Per Second:
                 </h4>
-                <h1 class="text-center">%</h1>
+                <h1 class="text-center" id="processed_per_second">%</h1>
             </div>
             <div class="col-md-3">
                 <h4 class="text-center">
-                    Data Points Processed:
+                    Time to Train Model:
                 </h4>
-                <h1 class="text-center">#</h1>
+                <h1 class="text-center" id="time_to_train_model">#</h1>
             </div>
         </div>
     </div>

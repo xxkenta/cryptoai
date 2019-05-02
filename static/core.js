@@ -1,4 +1,4 @@
-var checkRefresh = angular.module('checkRefresh', []);
+$.get
 
 function mainController($scope, $http){
     $scope.formData = {};
